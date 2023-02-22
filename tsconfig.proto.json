@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "CommonJS",
+    "lib": ["ESNext"],
+    "allowJs": false,
+    "outDir": "release",
+
+    "strict": true,
+    "noImplicitAny": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "exactOptionalPropertyTypes": true,
+    "declaration": true,
+
+    "esModuleInterop": true
+  },
+  "exclude": ["node_modules"],
+  "include": ["release/**/*"]
+}

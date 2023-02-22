@@ -1,0 +1,95 @@
+name: Trigger Protobuf Refresh
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: github.repository == 'revwa/protobuf'
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      published: ${{ steps.published.outputs.published }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install dependencies
+        run: npm ci
+      - name: Compile TS
+        run: npm run build:parser
+      - name: Scrape current app script
+        run: npm run fetch
+      - name: Get current version
+        id: version
+        run: echo "version=$(grep -Po "(?<=VERSION=\")\d+\.\d+\.\d+" app.js)" >> $GITHUB_OUTPUT
+      - name: Get published version
+        id: published
+        run: echo "published=$(npm view @revwa/protobuf version)" >> $GITHUB_OUTPUT
+      - name: Cache App Script
+        uses: actions/cache@v3
+        with:
+          path: app.js
+          key: app-${{ steps.version.outputs.version }}
+          restore-keys: app-
+
+  refresh:
+    needs: check
+    runs-on: ubuntu-latest
+    if: needs.check.outputs.version != needs.check.outputs.published
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          registry-url: 'https://registry.npmjs.org'
+      - name: Get App Script
+        uses: actions/cache@v3
+        with:
+          path: app.js
+          key: app-${{ steps.version.outputs.version }}
+      - name: Install dependencies
+        run: npm ci
+      - name: Compile TS
+        run: npm run build:parser
+      # download the compiler from their releases page
+      - name: Download protoc
+        run:  curl -L -o protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v22.0/protoc-22.0-linux-x86_64.zip
+      - name: Unzip protoc
+        run: unzip protoc.zip -d unzipped
+      - name: Move protoc to home
+        run: mv unzipped/bin/protoc .
+      # generate the proto file from the app script
+      - name: Create Protobuf
+        run: npm run parse
+      # the release folder is a isolated folder that will be used to create the package
+      - name: Move proto to release
+        run: mv whatsapp.proto release/index.proto
+      # this will generate the TS files from the proto file
+      - name: Run the Protobuf Compiler
+        run: ./protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_opt=useSnakeTypeName=false,forceLong=long,useExactTypes=false,esModuleInterop=true --ts_proto_out=. ./release/index.proto
+      # compile the generated TS to JS & .D.TS
+      - name: Append version to generated TS
+        shell: bash
+        env:
+          APP_VERSION: ${{needs.check.outputs.version}}
+        run: sed -i "1s/^/export const protobufVersion = \"$APP_VERSION\";\n/" ./release/index.ts
+      - name: Compile generated TS
+        run: npm run build:proto
+      - name: Delete generated TS
+        run: rm release/index.ts
+      - name: Copy license and readme
+        run: mv LICENSE release/LICENSE && mv README.md release/README.md
+      # start packing things up
+      - name: Replace version
+        shell: bash
+        env:
+          APP_VERSION: ${{needs.check.outputs.version}}
+        run: sed -i "s/REPLACE_VERSION/$APP_VERSION/" ./release/package.json
+      - name: Publish to NPM
+        run: npm publish ./release --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

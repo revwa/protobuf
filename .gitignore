@@ -1,0 +1,9 @@
+.env
+/node_modules
+/build
+/public
+*.js
+*.proto
+*.zip
+protoc*
+whatsapp*

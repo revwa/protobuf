@@ -1,0 +1,16 @@
+{
+    "name": "@revwa/protobuf",
+    "version": "REPLACE_VERSION",
+    "description": "WhatsApp Internal Protocol Buffers",
+    "keywords": ["protobuf", "whatsapp", "typescript", "proto", "proto2"],
+    "author": "ponei",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/revwa/protobuf.git"
+    },
+    "dependencies": {
+        "long": "^5.2.1",
+        "protobufjs": "^7.2.2"
+    }
+}
