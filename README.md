@@ -1,6 +1,8 @@
 
 # Revwa: Proto
 
+![version](https://img.shields.io/npm/v/@revwa/protobuf) ![size](https://img.shields.io/bundlephobia/min/@revwa/protobuf) ![license](https://img.shields.io/npm/l/@revwa/protobuf)
+
 This project is inspired by [proto-extract](https://github.com/adiwajshing/Baileys/tree/master/proto-extract), which itself is an inspiration from [whatsmeow](https://github.com/tulir/whatsmeow).
 
 This is an iteration of the whole process of generating the Protobuf definitions. Both projects above are manually updated and depend on the maintainer to do this job. This means the Protobuf file, and its functions, may not represent the current state of the definition.
